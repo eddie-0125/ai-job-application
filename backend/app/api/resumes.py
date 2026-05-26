@@ -11,7 +11,7 @@ from app.db.models import Job, Resume
 from app.db.session import get_db
 from app.schemas.job import JobProfile
 from app.schemas.resume import ResumeTailorRequest, ResumeTailorResponse, ResumeUploadResponse
-from app.services.pdf import extract_text_from_pdf
+from app.services.document_parser import extract_text_from_document
 
 router = APIRouter()
 
@@ -23,18 +23,10 @@ async def upload_resume(
     db: AsyncSession = Depends(get_db),
 ):
     data = await file.read()
-    content = ""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
 
-    if file.filename and file.filename.lower().endswith(".pdf"):
-        try:
-            content = extract_text_from_pdf(data)
-        except Exception as exc:
-            raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {exc}") from exc
-    else:
-        content = data.decode("utf-8", errors="replace")
-
-    if len(content.strip()) < 50:
-        raise HTTPException(status_code=400, detail="Resume content too short or unreadable")
+    content = extract_text_from_document(data, file.filename)
 
     file_path: str | None = None
     if file.filename:

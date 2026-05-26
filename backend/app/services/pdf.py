@@ -1,13 +1,5 @@
-from io import BytesIO
+"""Backward-compatible re-export."""
 
-from pypdf import PdfReader
+from app.services.document_parser import extract_text_from_pdf
 
-
-def extract_text_from_pdf(data: bytes) -> str:
-    reader = PdfReader(BytesIO(data))
-    parts: list[str] = []
-    for page in reader.pages:
-        text = page.extract_text()
-        if text:
-            parts.append(text.strip())
-    return "\n\n".join(parts)
+__all__ = ["extract_text_from_pdf"]

@@ -68,7 +68,7 @@ infrastructure/    Docker, CI/CD
 
 | Phase | Features |
 |-------|----------|
-| **1 (MVP)** | Resume upload, JD analysis, tailoring, cover letters |
+| **1 (MVP)** | Resume file upload (PDF/DOC/DOCX), JD analysis, tailoring, cover letters |
 | **2** | RAG memory, dashboard, scoring engine |
 | **3** | Browser automation, LangGraph workflows |
 | **4** | Evaluation system, production deployment |

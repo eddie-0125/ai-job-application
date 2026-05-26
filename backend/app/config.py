@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     secret_key: str = "dev-secret-change-in-production"
     cors_origins: str = "http://localhost:3000"
 
-    openai_api_key: str = ""
+    openai_api_key: str = "your-openai-api-key"
     openai_model: str = "gpt-4.1-mini"
     embedding_model: str = "text-embedding-3-small"
 

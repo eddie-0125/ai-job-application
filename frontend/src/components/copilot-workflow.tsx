@@ -1,12 +1,13 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { useCopilotStore } from "@/store/copilot";
 import type { JobProfile } from "@shared/types";
 
-const STEPS = ["Resume", "Job", "Tailor", "Cover Letter", "Match"] as const;
+const STEPS = ["Job", "Tailor", "Cover Letter", "Match"] as const;
+const ACCEPTED_RESUME_TYPES = ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
@@ -63,14 +64,26 @@ function JobProfileCard({ profile }: { profile: JobProfile }) {
   );
 }
 
+function parseErrorMessage(err: unknown): string {
+  if (!(err instanceof Error)) return "Something went wrong";
+  try {
+    const parsed = JSON.parse(err.message) as { detail?: string };
+    if (typeof parsed.detail === "string") return parsed.detail;
+  } catch {
+    /* plain text */
+  }
+  return err.message;
+}
+
 export function CopilotWorkflow() {
   const [step, setStep] = useState(0);
-  const [resumeText, setResumeText] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeTitle, setResumeTitle] = useState("My Resume");
   const [jobDesc, setJobDesc] = useState("");
   const [company, setCompany] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     resume,
@@ -85,43 +98,36 @@ export function CopilotWorkflow() {
     setMatchScore,
   } = useCopilotStore();
 
-  const uploadResume = useMutation({
-    mutationFn: () => api.createResumeText(resumeText, resumeTitle),
-    onSuccess: (data) => {
-      setResume(data);
-      setError(null);
-      setStep(1);
-    },
-    onError: (e: Error) => setError(e.message),
-  });
-
   const analyzeJob = useMutation({
     mutationFn: () =>
       api.analyzeJob({ description: jobDesc, company, title: jobTitle }),
     onSuccess: (data) => {
       setJob(data);
       setError(null);
-      setStep(2);
+      setStep(1);
     },
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(parseErrorMessage(e)),
   });
 
-  const tailor = useMutation({
-    mutationFn: () => {
-      if (!resume || !job) throw new Error("Resume and job required");
-      return api.tailorResume(resume.resume_id, job.job_id);
+  const uploadAndTailor = useMutation({
+    mutationFn: async () => {
+      if (!resumeFile) throw new Error("请选择简历文件");
+      if (!job) throw new Error("请先完成职位分析");
+      const uploaded = await api.uploadResume(resumeFile, resumeTitle);
+      setResume(uploaded);
+      return api.tailorResume(uploaded.resume_id, job.job_id);
     },
     onSuccess: (data) => {
       setTailorResult(data);
       setError(null);
-      setStep(3);
+      setStep(2);
     },
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(parseErrorMessage(e)),
   });
 
   const cover = useMutation({
     mutationFn: () => {
-      if (!resume || !job) throw new Error("Resume and job required");
+      if (!resume || !job) throw new Error("请先上传简历并完成优化");
       return api.generateCoverLetter({
         resume_id: resume.resume_id,
         job_id: job.job_id,
@@ -131,14 +137,14 @@ export function CopilotWorkflow() {
     onSuccess: (data) => {
       setCoverLetter(data);
       setError(null);
-      setStep(4);
+      setStep(3);
     },
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(parseErrorMessage(e)),
   });
 
   const match = useMutation({
     mutationFn: async () => {
-      if (!resume || !job) throw new Error("Resume and job required");
+      if (!resume || !job) throw new Error("请先上传简历");
       const score = await api.scoreMatch(job.job_id, resume.resume_id);
       await api.createApplication(job.job_id, resume.resume_id);
       return score;
@@ -147,15 +153,29 @@ export function CopilotWorkflow() {
       setMatchScore(data);
       setError(null);
     },
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(parseErrorMessage(e)),
   });
 
   const loading =
-    uploadResume.isPending ||
     analyzeJob.isPending ||
-    tailor.isPending ||
+    uploadAndTailor.isPending ||
     cover.isPending ||
     match.isPending;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!ext || !["pdf", "doc", "docx"].includes(ext)) {
+      setError("仅支持 PDF、DOC、DOCX 格式");
+      return;
+    }
+    setResumeFile(file);
+    setError(null);
+    if (resumeTitle === "My Resume") {
+      setResumeTitle(file.name.replace(/\.[^.]+$/, ""));
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -184,39 +204,8 @@ export function CopilotWorkflow() {
 
       {step === 0 && (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Upload your resume</h2>
-          <p className="text-sm text-zinc-400">
-            Paste resume text for MVP. PDF upload is available via API.
-          </p>
-          <input
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
-            placeholder="Resume title"
-            value={resumeTitle}
-            onChange={(e) => setResumeTitle(e.target.value)}
-          />
-          <textarea
-            className="w-full min-h-[240px] rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm font-mono"
-            placeholder="Paste your resume content..."
-            value={resumeText}
-            onChange={(e) => setResumeText(e.target.value)}
-          />
-          <button
-            type="button"
-            disabled={loading || resumeText.length < 50}
-            onClick={() => uploadResume.mutate()}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
-          >
-            {uploadResume.isPending ? "Uploading…" : "Continue"}
-          </button>
-          {resume && (
-            <p className="text-xs text-emerald-400">Saved: {resume.title}</p>
-          )}
-        </section>
-      )}
-
-      {step === 1 && (
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">Analyze job description</h2>
+          <p className="text-sm text-zinc-400">先分析职位，再在下一步上传简历进行优化。</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <input
               className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
@@ -253,29 +242,98 @@ export function CopilotWorkflow() {
         </section>
       )}
 
-      {step === 2 && (
+      {step === 1 && (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Tailor resume</h2>
+          <h2 className="text-xl font-semibold">上传简历并优化</h2>
           <p className="text-sm text-zinc-400">
-            AI rewrites bullets for ATS fit — no fabricated experience.
+            上传 PDF 或 Word 简历（.pdf / .doc / .docx），系统将自动解析内容并针对当前职位进行 ATS 优化。
           </p>
+
+          {!job && (
+            <p className="text-sm text-amber-400">请先在「Job」步骤完成职位分析。</p>
+          )}
+
+          <input
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+            placeholder="简历标题"
+            value={resumeTitle}
+            onChange={(e) => setResumeTitle(e.target.value)}
+          />
+
+          <div
+            className={`relative rounded-xl border-2 border-dashed p-8 text-center transition ${
+              resumeFile
+                ? "border-violet-500/50 bg-violet-500/5"
+                : "border-zinc-700 hover:border-zinc-500"
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED_RESUME_TYPES}
+              className="absolute inset-0 cursor-pointer opacity-0"
+              onChange={handleFileChange}
+            />
+            {resumeFile ? (
+              <div className="space-y-1">
+                <p className="font-medium text-violet-300">{resumeFile.name}</p>
+                <p className="text-xs text-zinc-500">
+                  {(resumeFile.size / 1024).toFixed(1)} KB
+                </p>
+                <button
+                  type="button"
+                  className="mt-2 text-xs text-zinc-400 underline hover:text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setResumeFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                >
+                  重新选择文件
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-zinc-300">点击或拖拽上传简历</p>
+                <p className="text-xs text-zinc-500">支持 PDF、DOC、DOCX，最大 10 MB</p>
+              </div>
+            )}
+          </div>
+
+          {resume && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 space-y-2">
+              <p className="text-xs font-medium text-emerald-400">已解析简历内容预览</p>
+              <p className="text-xs text-zinc-400 whitespace-pre-wrap max-h-32 overflow-auto">
+                {resume.content_preview}
+              </p>
+            </div>
+          )}
+
           <button
             type="button"
-            disabled={loading || !resume || !job}
-            onClick={() => tailor.mutate()}
+            disabled={loading || !resumeFile || !job}
+            onClick={() => uploadAndTailor.mutate()}
             className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
           >
-            {tailor.isPending ? "Tailoring…" : "Generate tailored resume"}
+            {uploadAndTailor.isPending ? "解析并优化中…" : "上传并生成优化简历"}
           </button>
+
           {tailorResult && (
-            <div className="space-y-4">
+            <div className="space-y-4 border-t border-zinc-800 pt-4">
               <div className="flex items-center gap-3">
-                <span className="text-sm text-zinc-400">ATS estimate</span>
+                <span className="text-sm text-zinc-400">ATS 预估分数</span>
                 <span className="text-2xl font-bold text-emerald-400">
                   {tailorResult.ats_score_estimate}
                 </span>
               </div>
               <p className="text-sm text-zinc-300">{tailorResult.explanation}</p>
+              {tailorResult.warnings.length > 0 && (
+                <ul className="text-xs text-amber-300 space-y-1">
+                  {tailorResult.warnings.map((w) => (
+                    <li key={w}>• {w}</li>
+                  ))}
+                </ul>
+              )}
               {tailorResult.changes.map((c, i) => (
                 <div key={i} className="rounded-xl border border-zinc-800 p-4 text-sm space-y-2">
                   <p className="font-medium text-violet-300">{c.section}</p>
@@ -292,7 +350,7 @@ export function CopilotWorkflow() {
         </section>
       )}
 
-      {step === 3 && (
+      {step === 2 && (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">Cover letter</h2>
           <button
@@ -320,7 +378,7 @@ export function CopilotWorkflow() {
         </section>
       )}
 
-      {step === 4 && (
+      {step === 3 && (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">Match score</h2>
           <button

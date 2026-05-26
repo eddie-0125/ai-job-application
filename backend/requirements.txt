@@ -17,3 +17,4 @@ langgraph>=0.2.53
 instructor>=1.7.0
 python-dotenv>=1.0.1
 pypdf>=5.1.0
+python-docx>=1.1.0

@@ -3,8 +3,18 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, init);
   if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(detail || `Request failed: ${res.status}`);
+    const raw = await res.text();
+    let message = raw || `Request failed: ${res.status}`;
+    try {
+      const json = JSON.parse(raw) as { detail?: string | { msg: string }[] };
+      if (typeof json.detail === "string") message = json.detail;
+      else if (Array.isArray(json.detail)) {
+        message = json.detail.map((d) => d.msg).join("; ");
+      }
+    } catch {
+      /* use raw */
+    }
+    throw new Error(message);
   }
   return res.json() as Promise<T>;
 }
