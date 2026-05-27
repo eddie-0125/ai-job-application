@@ -58,7 +58,17 @@ export interface ApplicationSummary {
   id: string;
   job_id: string;
   resume_id: string | null;
+  company: string;
+  job_title: string;
   status: string;
   score: number | null;
   created_at: string | null;
+  applied_at: string | null;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar_url: string | null;
 }

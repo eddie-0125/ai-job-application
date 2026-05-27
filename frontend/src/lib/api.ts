@@ -1,7 +1,29 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const TOKEN_KEY = "copilot_access_token";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, init);
+export function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setStoredToken(token: string | null) {
+  if (typeof window === "undefined") return;
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
+}
+
+function authHeaders(): HeadersInit {
+  const token = getStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function request<T>(path: string, init?: RequestInit, auth = false): Promise<T> {
+  const headers: HeadersInit = {
+    ...(init?.headers ?? {}),
+    ...(auth ? authHeaders() : {}),
+  };
+
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
   if (!res.ok) {
     const raw = await res.text();
     let message = raw || `Request failed: ${res.status}`;
@@ -20,7 +42,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getApiUrl: () => API_URL,
+
   health: () => request<{ status: string }>("/health"),
+
+  getMe: () => request<import("@shared/types").User>("/api/auth/me", undefined, true),
+
+  logout: () => request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }, true),
+
+  googleLoginUrl: () => `${API_URL}/api/auth/google/login`,
 
   analyzeJob: (body: {
     description: string;
@@ -38,28 +68,23 @@ export const api = {
     const form = new FormData();
     form.append("file", file);
     form.append("title", title);
-    return request<import("@shared/types").ResumeUploadResponse>("/api/resumes/upload", {
-      method: "POST",
-      body: form,
-    });
-  },
-
-  createResumeText: (content: string, title: string) => {
-    const form = new FormData();
-    form.append("content", content);
-    form.append("title", title);
-    return request<import("@shared/types").ResumeUploadResponse>("/api/resumes/text", {
-      method: "POST",
-      body: form,
-    });
+    return request<import("@shared/types").ResumeUploadResponse>(
+      "/api/resumes/upload",
+      { method: "POST", body: form },
+      true
+    );
   },
 
   tailorResume: (resumeId: string, jobId: string) =>
-    request<import("@shared/types").ResumeTailorResponse>("/api/resumes/tailor", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
-    }),
+    request<import("@shared/types").ResumeTailorResponse>(
+      "/api/resumes/tailor",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
+      },
+      true
+    ),
 
   generateCoverLetter: (body: {
     resume_id: string;
@@ -67,11 +92,15 @@ export const api = {
     length?: string;
     hiring_manager?: string;
   }) =>
-    request<import("@shared/types").CoverLetterResponse>("/api/cover-letters/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }),
+    request<import("@shared/types").CoverLetterResponse>(
+      "/api/cover-letters/generate",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+      true
+    ),
 
   scoreMatch: (jobId: string, resumeId: string) =>
     request<import("@shared/types").MatchScoreResponse>(
@@ -80,12 +109,23 @@ export const api = {
     ),
 
   listApplications: () =>
-    request<import("@shared/types").ApplicationSummary[]>("/api/applications"),
+    request<import("@shared/types").ApplicationSummary[]>("/api/applications", undefined, true),
 
   createApplication: (jobId: string, resumeId: string) =>
-    request<{ id: string }>("/api/applications", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ job_id: jobId, resume_id: resumeId }),
-    }),
+    request<{ id: string }>(
+      "/api/applications",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id: jobId, resume_id: resumeId }),
+      },
+      true
+    ),
+
+  updateApplicationStatus: (applicationId: string, status: string) =>
+    request<{ id: string; status: string }>(
+      `/api/applications/${applicationId}/status?status=${encodeURIComponent(status)}`,
+      { method: "PATCH" },
+      true
+    ),
 };

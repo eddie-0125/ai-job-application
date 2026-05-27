@@ -5,8 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from agents.cover_letter_agent import CoverLetterAgent
-from app.db.models import Job, Resume
+from app.db.models import Job, User
 from app.db.session import get_db
+from app.deps.auth import get_current_user, get_user_resume
 from app.schemas.cover_letter import CoverLetterRequest, CoverLetterResponse
 from app.schemas.job import JobProfile
 
@@ -17,11 +18,9 @@ router = APIRouter()
 async def generate_cover_letter(
     body: CoverLetterRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    resume_result = await db.execute(select(Resume).where(Resume.id == body.resume_id))
-    resume = resume_result.scalar_one_or_none()
-    if not resume:
-        raise HTTPException(status_code=404, detail="Resume not found")
+    resume = await get_user_resume(body.resume_id, current_user, db)
 
     job_result = await db.execute(select(Job).where(Job.id == body.job_id))
     job = job_result.scalar_one_or_none()

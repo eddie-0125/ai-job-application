@@ -9,7 +9,7 @@ if str(_backend_root) not in sys.path:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import applications, cover_letters, health, jobs, resumes
+from app.api import applications, auth, cover_letters, health, jobs, resumes
 from app.config import settings
 from app.db.session import init_db
 
@@ -37,6 +37,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, tags=["health"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
 app.include_router(resumes.router, prefix="/api/resumes", tags=["resumes"])
 app.include_router(cover_letters.router, prefix="/api/cover-letters", tags=["cover-letters"])

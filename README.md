@@ -23,8 +23,25 @@ Frontend (Next.js) → API Gateway (FastAPI) → AI Orchestrator → Agents
 ```bash
 docker compose up -d
 cp .env.example .env
-# Add OPENAI_API_KEY to .env
+# Add OPENAI_API_KEY and Google OAuth credentials to .env
 ```
+
+### Google OAuth setup
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create an **OAuth 2.0 Client ID** (Web application)
+3. Add authorized redirect URI: `http://localhost:8000/api/auth/google/callback`
+4. Copy Client ID and Secret into `.env`:
+
+```bash
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
+FRONTEND_URL=http://localhost:3000
+SECRET_KEY=use-a-long-random-string
+```
+
+Users sign in via **Sign in with Google** → applications and resumes are scoped to their account.
 
 ### 2. Backend
 

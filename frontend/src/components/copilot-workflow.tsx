@@ -2,7 +2,9 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
+import { GoogleSignInButton } from "@/components/site-header";
 import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
 import { useCopilotStore } from "@/store/copilot";
 import type { JobProfile } from "@shared/types";
 
@@ -97,6 +99,8 @@ export function CopilotWorkflow() {
     setCoverLetter,
     setMatchScore,
   } = useCopilotStore();
+
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
 
   const analyzeJob = useMutation({
     mutationFn: () =>
@@ -249,6 +253,13 @@ export function CopilotWorkflow() {
             上传 PDF 或 Word 简历（.pdf / .doc / .docx），系统将自动解析内容并针对当前职位进行 ATS 优化。
           </p>
 
+          {!authLoading && !isAuthenticated && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+              <p className="text-sm text-amber-200">请先登录 Google 账号，以便保存简历和申请记录。</p>
+              <GoogleSignInButton label="Sign in with Google" />
+            </div>
+          )}
+
           {!job && (
             <p className="text-sm text-amber-400">请先在「Job」步骤完成职位分析。</p>
           )}
@@ -311,7 +322,7 @@ export function CopilotWorkflow() {
 
           <button
             type="button"
-            disabled={loading || !resumeFile || !job}
+            disabled={loading || !resumeFile || !job || !isAuthenticated}
             onClick={() => uploadAndTailor.mutate()}
             className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
           >

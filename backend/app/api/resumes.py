@@ -7,8 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from agents.resume_agent import ResumeOptimizationAgent
 from app.config import settings
-from app.db.models import Job, Resume
+from app.db.models import Job, Resume, User
 from app.db.session import get_db
+from app.deps.auth import get_current_user, get_user_resume
 from app.schemas.job import JobProfile
 from app.schemas.resume import ResumeTailorRequest, ResumeTailorResponse, ResumeUploadResponse
 from app.services.document_parser import extract_text_from_document
@@ -21,6 +22,7 @@ async def upload_resume(
     file: UploadFile = File(...),
     title: str = Form("My Resume"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     data = await file.read()
     if not file.filename:
@@ -37,7 +39,12 @@ async def upload_resume(
         dest.write_bytes(data)
         file_path = str(dest)
 
-    resume = Resume(title=title, content=content, file_path=file_path)
+    resume = Resume(
+        user_id=current_user.id,
+        title=title,
+        content=content,
+        file_path=file_path,
+    )
     db.add(resume)
     await db.commit()
     await db.refresh(resume)
@@ -51,11 +58,12 @@ async def create_resume_from_text(
     content: str = Form(...),
     title: str = Form("My Resume"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     if len(content.strip()) < 50:
         raise HTTPException(status_code=400, detail="Resume content too short")
 
-    resume = Resume(title=title, content=content)
+    resume = Resume(user_id=current_user.id, title=title, content=content)
     db.add(resume)
     await db.commit()
     await db.refresh(resume)
@@ -65,11 +73,12 @@ async def create_resume_from_text(
 
 
 @router.get("/{resume_id}")
-async def get_resume(resume_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Resume).where(Resume.id == resume_id))
-    resume = result.scalar_one_or_none()
-    if not resume:
-        raise HTTPException(status_code=404, detail="Resume not found")
+async def get_resume(
+    resume_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    resume = await get_user_resume(resume_id, current_user, db)
     return {
         "resume_id": resume.id,
         "title": resume.title,
@@ -82,11 +91,9 @@ async def get_resume(resume_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
 async def tailor_resume(
     body: ResumeTailorRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    resume_result = await db.execute(select(Resume).where(Resume.id == body.resume_id))
-    resume = resume_result.scalar_one_or_none()
-    if not resume:
-        raise HTTPException(status_code=404, detail="Resume not found")
+    resume = await get_user_resume(body.resume_id, current_user, db)
 
     job_result = await db.execute(select(Job).where(Job.id == body.job_id))
     job = job_result.scalar_one_or_none()
