@@ -14,6 +14,23 @@ class JobProfile(BaseModel):
     domain_requirements: list[str] = Field(default_factory=list)
 
 
+class JobExtractedFields(BaseModel):
+    company: str = ""
+    title: str = ""
+    description: str = Field(..., min_length=1)
+
+
+class JobImportFromUrlRequest(BaseModel):
+    url: str = Field(..., min_length=10, max_length=2048)
+
+
+class JobImportFromUrlResponse(BaseModel):
+    company: str
+    title: str
+    description: str
+    source_url: str
+
+
 class JobAnalyzeRequest(BaseModel):
     description: str = Field(..., min_length=50)
     company: str = ""

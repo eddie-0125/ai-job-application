@@ -52,6 +52,13 @@ export const api = {
 
   googleLoginUrl: () => `${API_URL}/api/auth/google/login`,
 
+  importJobFromUrl: (url: string) =>
+    request<import("@shared/types").JobImportFromUrlResponse>("/api/jobs/import-from-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    }),
+
   analyzeJob: (body: {
     description: string;
     company?: string;

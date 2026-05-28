@@ -9,6 +9,13 @@ export interface JobProfile {
   domain_requirements?: string[];
 }
 
+export interface JobImportFromUrlResponse {
+  company: string;
+  title: string;
+  description: string;
+  source_url: string;
+}
+
 export interface JobAnalyzeResponse {
   job_id: string;
   profile: JobProfile;

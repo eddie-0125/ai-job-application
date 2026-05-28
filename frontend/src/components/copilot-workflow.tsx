@@ -84,6 +84,8 @@ export function CopilotWorkflow() {
   const [jobDesc, setJobDesc] = useState("");
   const [company, setCompany] = useState("");
   const [jobTitle, setJobTitle] = useState("");
+  const [jobUrl, setJobUrl] = useState("");
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,9 +104,27 @@ export function CopilotWorkflow() {
 
   const { isAuthenticated, isLoading: authLoading } = useAuthStore();
 
+  const importFromUrl = useMutation({
+    mutationFn: () => api.importJobFromUrl(jobUrl.trim()),
+    onSuccess: (data) => {
+      setCompany(data.company);
+      setJobTitle(data.title);
+      setJobDesc(data.description);
+      setSourceUrl(data.source_url);
+      setJobUrl(data.source_url);
+      setError(null);
+    },
+    onError: (e: Error) => setError(parseErrorMessage(e)),
+  });
+
   const analyzeJob = useMutation({
     mutationFn: () =>
-      api.analyzeJob({ description: jobDesc, company, title: jobTitle }),
+      api.analyzeJob({
+        description: jobDesc,
+        company,
+        title: jobTitle,
+        source_url: sourceUrl ?? undefined,
+      }),
     onSuccess: (data) => {
       setJob(data);
       setError(null);
@@ -161,6 +181,7 @@ export function CopilotWorkflow() {
   });
 
   const loading =
+    importFromUrl.isPending ||
     analyzeJob.isPending ||
     uploadAndTailor.isPending ||
     cover.isPending ||
@@ -209,7 +230,32 @@ export function CopilotWorkflow() {
       {step === 0 && (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">Analyze job description</h2>
-          <p className="text-sm text-zinc-400">先分析职位，再在下一步上传简历进行优化。</p>
+          <p className="text-sm text-zinc-400">
+            粘贴职位链接可自动填充公司、职位与描述（支持 LinkedIn、Indeed、公司招聘页等），或手动填写后分析。
+          </p>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 space-y-3">
+            <p className="text-sm font-medium text-zinc-300">从链接导入</p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="url"
+                className="flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+                placeholder="https://www.linkedin.com/jobs/view/…"
+                value={jobUrl}
+                onChange={(e) => setJobUrl(e.target.value)}
+              />
+              <button
+                type="button"
+                disabled={loading || jobUrl.trim().length < 10}
+                onClick={() => importFromUrl.mutate()}
+                className="shrink-0 rounded-lg border border-violet-500/50 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-200 hover:bg-violet-500/20 disabled:opacity-50"
+              >
+                {importFromUrl.isPending ? "正在解析…" : "解析链接"}
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500">
+              部分站点需登录或会拦截自动抓取；若失败请直接粘贴职位描述。
+            </p>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <input
               className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"

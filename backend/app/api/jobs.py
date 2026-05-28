@@ -8,10 +8,38 @@ from agents.job_agent import JobUnderstandingAgent
 from agents.match_scoring_agent import MatchScoringAgent
 from app.db.models import Job, Resume
 from app.db.session import get_db
-from app.schemas.job import JobAnalyzeRequest, JobAnalyzeResponse, JobProfile
+from app.schemas.job import (
+    JobAnalyzeRequest,
+    JobAnalyzeResponse,
+    JobImportFromUrlRequest,
+    JobImportFromUrlResponse,
+    JobProfile,
+)
 from app.schemas.match import MatchScoreResponse
+from app.services.job_errors import JobImportError
+from app.services.job_import import import_job_from_url
 
 router = APIRouter()
+
+
+@router.post("/import-from-url", response_model=JobImportFromUrlResponse)
+async def import_from_url(body: JobImportFromUrlRequest):
+    try:
+        fields = await import_job_from_url(body.url)
+    except JobImportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Job import failed. ({exc})",
+        ) from exc
+
+    return JobImportFromUrlResponse(
+        company=fields.company,
+        title=fields.title,
+        description=fields.description,
+        source_url=body.url.strip(),
+    )
 
 
 @router.post("/analyze", response_model=JobAnalyzeResponse)
