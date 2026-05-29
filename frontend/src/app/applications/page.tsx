@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { SiteHeader } from "@/components/site-header";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -26,9 +27,11 @@ function statusColor(status: string) {
 }
 
 export default function ApplicationsPage() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading } = useAuthStore();
+  const dateLocale = i18n.language === "zh" ? "zh-CN" : "en-US";
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -52,7 +55,7 @@ export default function ApplicationsPage() {
     return (
       <main className="min-h-screen bg-zinc-950 text-zinc-100">
         <SiteHeader />
-        <p className="py-20 text-center text-zinc-400">Loading…</p>
+        <p className="py-20 text-center text-zinc-400">{t("common.loading")}</p>
       </main>
     );
   }
@@ -65,14 +68,14 @@ export default function ApplicationsPage() {
       <div className="mx-auto max-w-5xl px-4 py-8">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">My Applications</h2>
-            <p className="text-sm text-zinc-400">Track jobs you&apos;ve analyzed and applied to.</p>
+            <h2 className="text-2xl font-semibold">{t("applications.title")}</h2>
+            <p className="text-sm text-zinc-400">{t("applications.subtitle")}</p>
           </div>
           <Link
             href="/"
             className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium hover:bg-violet-500"
           >
-            New application
+            {t("applications.newApplication")}
           </Link>
         </div>
 
@@ -83,12 +86,12 @@ export default function ApplicationsPage() {
         )}
 
         {isFetching && applications.length === 0 ? (
-          <p className="text-zinc-400">Loading applications…</p>
+          <p className="text-zinc-400">{t("applications.loading")}</p>
         ) : applications.length === 0 ? (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-10 text-center space-y-4">
-            <p className="text-zinc-400">No applications yet.</p>
+            <p className="text-zinc-400">{t("applications.empty")}</p>
             <Link href="/" className="text-violet-400 hover:text-violet-300 text-sm">
-              Start your first application →
+              {t("applications.startFirst")}
             </Link>
           </div>
         ) : (
@@ -103,19 +106,21 @@ export default function ApplicationsPage() {
                   <p className="text-sm text-zinc-400">{app.company}</p>
                   <p className="text-xs text-zinc-500 mt-1">
                     {app.created_at
-                      ? new Date(app.created_at).toLocaleDateString()
+                      ? new Date(app.created_at).toLocaleDateString(dateLocale)
                       : "—"}
                     {app.score != null && (
-                      <span className="ml-3 text-emerald-400">Score: {Math.round(app.score)}</span>
+                      <span className="ml-3 text-emerald-400">
+                        {t("applications.score", { value: Math.round(app.score) })}
+                      </span>
                     )}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${statusColor(app.status)}`}
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${statusColor(app.status)}`}
                   >
-                    {app.status}
+                    {t(`applications.status.${app.status}`, { defaultValue: app.status })}
                   </span>
                   <select
                     value={app.status}
@@ -126,7 +131,7 @@ export default function ApplicationsPage() {
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
-                        {s}
+                        {t(`applications.status.${s}`)}
                       </option>
                     ))}
                   </select>

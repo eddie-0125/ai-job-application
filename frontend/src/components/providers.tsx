@@ -2,7 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { I18nProvider } from "@/components/i18n-provider";
 import { useAuthStore } from "@/store/auth";
+import "@/i18n/config";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const fetchUser = useAuthStore((s) => s.fetchUser);
@@ -18,8 +20,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(() => new QueryClient());
 
   return (
-    <QueryClientProvider client={client}>
-      <AuthBootstrap>{children}</AuthBootstrap>
-    </QueryClientProvider>
+    <I18nProvider>
+      <QueryClientProvider client={client}>
+        <AuthBootstrap>{children}</AuthBootstrap>
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }

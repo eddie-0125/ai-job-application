@@ -2,10 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SiteHeader } from "@/components/site-header";
 import { useAuthStore } from "@/store/auth";
 
 function AuthCallbackInner() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { setToken, fetchUser } = useAuthStore();
@@ -14,15 +16,15 @@ function AuthCallbackInner() {
   useEffect(() => {
     const token = searchParams.get("token");
     if (!token) {
-      setError("Missing authentication token.");
+      setError(t("auth.missingToken"));
       return;
     }
 
     setToken(token);
     fetchUser()
       .then(() => router.replace("/applications"))
-      .catch(() => setError("Failed to complete sign in."));
-  }, [searchParams, setToken, fetchUser, router]);
+      .catch(() => setError(t("auth.signInFailed")));
+  }, [searchParams, setToken, fetchUser, router, t]);
 
   return (
     <div className="mx-auto max-w-md px-4 py-20 text-center">
@@ -31,17 +33,19 @@ function AuthCallbackInner() {
           {error}
         </div>
       ) : (
-        <p className="text-zinc-400">Completing sign in…</p>
+        <p className="text-zinc-400">{t("auth.completingSignIn")}</p>
       )}
     </div>
   );
 }
 
 export default function AuthCallbackPage() {
+  const { t } = useTranslation();
+
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <SiteHeader />
-      <Suspense fallback={<p className="py-20 text-center text-zinc-400">Loading…</p>}>
+      <Suspense fallback={<p className="py-20 text-center text-zinc-400">{t("common.loading")}</p>}>
         <AuthCallbackInner />
       </Suspense>
     </main>

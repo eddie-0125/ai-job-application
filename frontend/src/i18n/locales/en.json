@@ -1,0 +1,113 @@
+{
+  "meta": {
+    "title": "AI Job Application Copilot",
+    "description": "Analyze jobs, tailor resumes, generate cover letters, and score application fit."
+  },
+  "common": {
+    "loading": "Loading…",
+    "somethingWrong": "Something went wrong"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文",
+    "switch": "Language"
+  },
+  "header": {
+    "brand": "AI Job Application Copilot",
+    "title": "Autonomous Career Agent",
+    "myApplications": "My Applications",
+    "signOut": "Sign out",
+    "signInGoogle": "Sign in with Google",
+    "continueGoogle": "Continue with Google"
+  },
+  "footer": {
+    "tagline": "Human-in-the-loop · No fabricated experience · Approval required before submit"
+  },
+  "login": {
+    "welcome": "Welcome",
+    "subtitle": "Sign in with your Google account to save applications and view your history.",
+    "privacy": "We only use your Google profile to identify your account. No posts or emails are sent."
+  },
+  "auth": {
+    "missingToken": "Missing authentication token.",
+    "signInFailed": "Failed to complete sign in.",
+    "completingSignIn": "Completing sign in…"
+  },
+  "applications": {
+    "title": "My Applications",
+    "subtitle": "Track jobs you've analyzed and applied to.",
+    "newApplication": "New application",
+    "loading": "Loading applications…",
+    "empty": "No applications yet.",
+    "startFirst": "Start your first application →",
+    "score": "Score: {{value}}",
+    "status": {
+      "draft": "Draft",
+      "applied": "Applied",
+      "interview": "Interview",
+      "rejected": "Rejected",
+      "offer": "Offer"
+    }
+  },
+  "copilot": {
+    "steps": {
+      "job": "Job",
+      "tailor": "Tailor",
+      "coverLetter": "Cover Letter",
+      "match": "Match"
+    },
+    "errors": {
+      "selectResume": "Please select a resume file",
+      "analyzeJobFirst": "Please complete job analysis first",
+      "uploadResumeFirst": "Please upload a resume and complete tailoring first",
+      "uploadResumeOnly": "Please upload a resume first",
+      "invalidFileType": "Only PDF, DOC, and DOCX formats are supported"
+    },
+    "defaultResumeTitle": "My Resume",
+    "job": {
+      "title": "Analyze job description",
+      "subtitle": "Paste a job URL to auto-fill company, title, and description (LinkedIn, Indeed, company career pages, etc.), or fill in manually and analyze.",
+      "importTitle": "Import from URL",
+      "importButton": "Parse URL",
+      "importing": "Parsing…",
+      "importHint": "Some sites require login or block scraping; if import fails, paste the job description directly.",
+      "company": "Company",
+      "jobTitle": "Job title",
+      "descriptionPlaceholder": "Paste the full job description...",
+      "analyze": "Analyze with AI",
+      "analyzing": "Analyzing…",
+      "requiredSkills": "Required skills",
+      "atsKeywords": "ATS keywords"
+    },
+    "tailor": {
+      "title": "Upload resume & tailor",
+      "subtitle": "Upload a PDF or Word resume (.pdf / .doc / .docx). The system will parse it and optimize for ATS against this job.",
+      "signInPrompt": "Sign in with your Google account to save your resume and application history.",
+      "completeJobFirst": "Complete job analysis in the Job step first.",
+      "resumeTitle": "Resume title",
+      "reselect": "Choose another file",
+      "uploadPrompt": "Click or drag to upload resume",
+      "uploadHint": "PDF, DOC, DOCX · max 10 MB",
+      "preview": "Parsed resume preview",
+      "uploadAndTailor": "Upload & generate tailored resume",
+      "processing": "Parsing & tailoring…",
+      "atsScore": "Estimated ATS score",
+      "completeJobStep": "Please complete job analysis in the Job step first."
+    },
+    "coverLetter": {
+      "title": "Cover letter",
+      "generate": "Generate cover letter",
+      "generating": "Generating…"
+    },
+    "match": {
+      "title": "Match score",
+      "scoreAndSave": "Score & save application",
+      "scoring": "Scoring…",
+      "technical": "Technical",
+      "domain": "Domain",
+      "ats": "ATS",
+      "experience": "Experience",
+      "resumeQuality": "Resume quality"
+    }
+  }
+}

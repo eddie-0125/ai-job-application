@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
 
 export function SiteHeader() {
+  const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuthStore();
 
   return (
@@ -12,25 +15,27 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-5">
         <Link href="/" className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-widest text-violet-400">
-            AI Job Application Copilot
+            {t("header.brand")}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight truncate">
-            Autonomous Career Agent
+            {t("header.title")}
           </h1>
         </Link>
 
         <div className="flex shrink-0 items-center gap-3">
+          <LanguageSwitcher />
+
           {isAuthenticated && (
             <Link
               href="/applications"
               className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white"
             >
-              My Applications
+              {t("header.myApplications")}
             </Link>
           )}
 
           {isLoading ? (
-            <span className="text-xs text-zinc-500">Loading…</span>
+            <span className="text-xs text-zinc-500">{t("common.loading")}</span>
           ) : isAuthenticated && user ? (
             <div className="flex items-center gap-2">
               {user.avatar_url ? (
@@ -54,7 +59,7 @@ export function SiteHeader() {
                 onClick={() => logout()}
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-white"
               >
-                Sign out
+                {t("header.signOut")}
               </button>
             </div>
           ) : (
@@ -62,7 +67,7 @@ export function SiteHeader() {
               href="/login"
               className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium hover:bg-violet-500"
             >
-              Sign in with Google
+              {t("header.signInGoogle")}
             </Link>
           )}
         </div>
@@ -71,7 +76,9 @@ export function SiteHeader() {
   );
 }
 
-export function GoogleSignInButton({ label = "Continue with Google" }: { label?: string }) {
+export function GoogleSignInButton() {
+  const { t } = useTranslation();
+
   return (
     <a
       href={api.googleLoginUrl()}
@@ -95,7 +102,7 @@ export function GoogleSignInButton({ label = "Continue with Google" }: { label?:
           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
         />
       </svg>
-      {label}
+      {t("header.continueGoogle")}
     </a>
   );
 }
