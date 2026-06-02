@@ -12,6 +12,11 @@
     "zh": "中文",
     "switch": "Language"
   },
+  "theme": {
+    "switch": "Toggle color theme",
+    "light": "Switch to light theme",
+    "dark": "Switch to dark theme"
+  },
   "header": {
     "brand": "AI Job Application Copilot",
     "title": "Autonomous Career Agent",

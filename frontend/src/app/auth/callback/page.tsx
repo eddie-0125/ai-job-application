@@ -29,11 +29,11 @@ function AuthCallbackInner() {
   return (
     <div className="mx-auto max-w-md px-4 py-20 text-center">
       {error ? (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-6 text-red-200">
+        <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-6 text-red-700 dark:text-red-200">
           {error}
         </div>
       ) : (
-        <p className="text-zinc-400">{t("auth.completingSignIn")}</p>
+        <p className="text-zinc-600 dark:text-zinc-400">{t("auth.completingSignIn")}</p>
       )}
     </div>
   );
@@ -43,9 +43,9 @@ export default function AuthCallbackPage() {
   const { t } = useTranslation();
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+    <main className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <SiteHeader />
-      <Suspense fallback={<p className="py-20 text-center text-zinc-400">{t("common.loading")}</p>}>
+      <Suspense fallback={<p className="py-20 text-center text-zinc-600 dark:text-zinc-400">{t("common.loading")}</p>}>
         <AuthCallbackInner />
       </Suspense>
     </main>

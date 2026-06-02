@@ -14,15 +14,15 @@ const STATUS_OPTIONS = ["draft", "applied", "interview", "rejected", "offer"] as
 function statusColor(status: string) {
   switch (status) {
     case "applied":
-      return "text-blue-300 bg-blue-500/10";
+      return "text-blue-700 bg-blue-500/10 dark:text-blue-300";
     case "interview":
-      return "text-amber-300 bg-amber-500/10";
+      return "text-amber-700 bg-amber-500/10 dark:text-amber-300";
     case "offer":
-      return "text-emerald-300 bg-emerald-500/10";
+      return "text-emerald-700 bg-emerald-500/10 dark:text-emerald-300";
     case "rejected":
-      return "text-red-300 bg-red-500/10";
+      return "text-red-700 bg-red-500/10 dark:text-red-300";
     default:
-      return "text-zinc-300 bg-zinc-700/50";
+      return "text-zinc-700 bg-zinc-200 dark:text-zinc-300 dark:bg-zinc-700/50";
   }
 }
 
@@ -53,9 +53,9 @@ export default function ApplicationsPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      <main className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
         <SiteHeader />
-        <p className="py-20 text-center text-zinc-400">{t("common.loading")}</p>
+        <p className="py-20 text-center text-zinc-600 dark:text-zinc-400">{t("common.loading")}</p>
       </main>
     );
   }
@@ -63,13 +63,13 @@ export default function ApplicationsPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 text-zinc-100">
+    <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50 text-zinc-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 dark:text-zinc-100">
       <SiteHeader />
       <div className="mx-auto max-w-5xl px-4 py-8">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-semibold">{t("applications.title")}</h2>
-            <p className="text-sm text-zinc-400">{t("applications.subtitle")}</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("applications.subtitle")}</p>
           </div>
           <Link
             href="/"
@@ -80,17 +80,17 @@ export default function ApplicationsPage() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-200">
             {(error as Error).message}
           </div>
         )}
 
         {isFetching && applications.length === 0 ? (
-          <p className="text-zinc-400">{t("applications.loading")}</p>
+          <p className="text-zinc-600 dark:text-zinc-400">{t("applications.loading")}</p>
         ) : applications.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-10 text-center space-y-4">
-            <p className="text-zinc-400">{t("applications.empty")}</p>
-            <Link href="/" className="text-violet-400 hover:text-violet-300 text-sm">
+          <div className="rounded-2xl border border-zinc-200 bg-white/80 p-10 text-center space-y-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <p className="text-zinc-600 dark:text-zinc-400">{t("applications.empty")}</p>
+            <Link href="/" className="text-violet-600 hover:text-violet-500 text-sm dark:text-violet-400 dark:hover:text-violet-300">
               {t("applications.startFirst")}
             </Link>
           </div>
@@ -99,11 +99,11 @@ export default function ApplicationsPage() {
             {applications.map((app) => (
               <div
                 key={app.id}
-                className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 flex flex-col sm:flex-row sm:items-center gap-4"
+                className="rounded-xl border border-zinc-200 bg-white/80 p-4 flex flex-col sm:flex-row sm:items-center gap-4 dark:border-zinc-800 dark:bg-zinc-900/50"
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{app.job_title}</p>
-                  <p className="text-sm text-zinc-400">{app.company}</p>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">{app.company}</p>
                   <p className="text-xs text-zinc-500 mt-1">
                     {app.created_at
                       ? new Date(app.created_at).toLocaleDateString(dateLocale)
@@ -127,7 +127,7 @@ export default function ApplicationsPage() {
                     onChange={(e) =>
                       updateStatus.mutate({ id: app.id, status: e.target.value })
                     }
-                    className="rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs"
+                    className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>

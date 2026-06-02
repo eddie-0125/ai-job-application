@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
 
@@ -11,10 +12,10 @@ export function SiteHeader() {
   const { user, isAuthenticated, isLoading, logout } = useAuthStore();
 
   return (
-    <header className="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur">
+    <header className="border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/80">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-5">
         <Link href="/" className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-widest text-violet-400">
+          <p className="text-xs font-medium uppercase tracking-widest text-violet-600 dark:text-violet-400">
             {t("header.brand")}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight truncate">
@@ -23,19 +24,20 @@ export function SiteHeader() {
         </Link>
 
         <div className="flex shrink-0 items-center gap-3">
+          <ThemeSwitcher />
           <LanguageSwitcher />
 
           {isAuthenticated && (
             <Link
               href="/applications"
-              className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white"
+              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-white"
             >
               {t("header.myApplications")}
             </Link>
           )}
 
           {isLoading ? (
-            <span className="text-xs text-zinc-500">{t("common.loading")}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-500">{t("common.loading")}</span>
           ) : isAuthenticated && user ? (
             <div className="flex items-center gap-2">
               {user.avatar_url ? (
@@ -43,7 +45,7 @@ export function SiteHeader() {
                 <img
                   src={user.avatar_url}
                   alt={user.name}
-                  className="h-8 w-8 rounded-full border border-zinc-700"
+                  className="h-8 w-8 rounded-full border border-zinc-300 dark:border-zinc-700"
                 />
               ) : (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-medium">
@@ -57,7 +59,7 @@ export function SiteHeader() {
               <button
                 type="button"
                 onClick={() => logout()}
-                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-white"
+                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-white"
               >
                 {t("header.signOut")}
               </button>
@@ -82,7 +84,7 @@ export function GoogleSignInButton() {
   return (
     <a
       href={api.googleLoginUrl()}
-      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-medium hover:border-zinc-500 hover:bg-zinc-800"
+      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-medium hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-500 dark:hover:bg-zinc-800"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
         <path

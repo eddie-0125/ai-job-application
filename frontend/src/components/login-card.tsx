@@ -7,10 +7,10 @@ export function LoginCard() {
   const { t } = useTranslation();
 
   return (
-    <div className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 space-y-6">
+    <div className="w-full rounded-2xl border border-zinc-200 bg-white/80 p-8 space-y-6 dark:border-zinc-800 dark:bg-zinc-900/50">
       <div className="space-y-2 text-center">
         <h2 className="text-2xl font-semibold">{t("login.welcome")}</h2>
-        <p className="text-sm text-zinc-400">{t("login.subtitle")}</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("login.subtitle")}</p>
       </div>
       <GoogleSignInButton />
       <p className="text-center text-xs text-zinc-500">{t("login.privacy")}</p>

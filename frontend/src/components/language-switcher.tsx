@@ -11,7 +11,7 @@ export function LanguageSwitcher() {
 
   return (
     <div
-      className="flex items-center rounded-lg border border-zinc-700 p-0.5 text-xs"
+      className="flex items-center rounded-lg border border-zinc-300 p-0.5 text-xs dark:border-zinc-700"
       role="group"
       aria-label={t("language.switch")}
     >
@@ -22,8 +22,8 @@ export function LanguageSwitcher() {
           onClick={() => void i18n.changeLanguage(locale)}
           className={`rounded-md px-2.5 py-1 font-medium transition ${
             current === locale
-              ? "bg-zinc-700 text-white"
-              : "text-zinc-400 hover:text-zinc-200"
+              ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-white"
+              : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
           }`}
           aria-pressed={current === locale}
         >
