@@ -118,13 +118,16 @@ export const api = {
   listApplications: () =>
     request<import("@shared/types").ApplicationSummary[]>("/api/applications", undefined, true),
 
-  createApplication: (jobId: string, resumeId: string) =>
+  createApplication: (jobId: string, resumeId?: string | null) =>
     request<{ id: string }>(
       "/api/applications",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job_id: jobId, resume_id: resumeId }),
+        body: JSON.stringify({
+          job_id: jobId,
+          ...(resumeId ? { resume_id: resumeId } : {}),
+        }),
       },
       true
     ),

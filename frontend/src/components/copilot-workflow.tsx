@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GoogleSignInButton } from "@/components/site-header";
@@ -82,6 +83,7 @@ export function CopilotWorkflow() {
   const [jobUrl, setJobUrl] = useState("");
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savedApplication, setSavedApplication] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -139,18 +141,28 @@ export function CopilotWorkflow() {
     onError: (e: Error) => setError(parseErrorMessage(e)),
   });
 
-  const uploadAndTailor = useMutation({
+  const uploadOnly = useMutation({
     mutationFn: async () => {
       if (!resumeFile) throw new Error(t("copilot.errors.selectResume"));
       if (!job) throw new Error(t("copilot.errors.analyzeJobFirst"));
-      const uploaded = await api.uploadResume(resumeFile, resumeTitle);
-      setResume(uploaded);
-      return api.tailorResume(uploaded.resume_id, job.job_id);
+      return api.uploadResume(resumeFile, resumeTitle);
+    },
+    onSuccess: (data) => {
+      setResume(data);
+      setError(null);
+    },
+    onError: (e: Error) => setError(parseErrorMessage(e)),
+  });
+
+  const tailorOnly = useMutation({
+    mutationFn: async () => {
+      if (!resume) throw new Error(t("copilot.errors.uploadResumeOnly"));
+      if (!job) throw new Error(t("copilot.errors.analyzeJobFirst"));
+      return api.tailorResume(resume.resume_id, job.job_id);
     },
     onSuccess: (data) => {
       setTailorResult(data);
       setError(null);
-      setStep(2);
     },
     onError: (e: Error) => setError(parseErrorMessage(e)),
   });
@@ -174,13 +186,24 @@ export function CopilotWorkflow() {
 
   const match = useMutation({
     mutationFn: async () => {
-      if (!resume || !job) throw new Error(t("copilot.errors.uploadResumeOnly"));
-      const score = await api.scoreMatch(job.job_id, resume.resume_id);
-      await api.createApplication(job.job_id, resume.resume_id);
+      if (!job) throw new Error(t("copilot.errors.analyzeJobToSave"));
+      if (!isAuthenticated) throw new Error(t("copilot.errors.signInToSave"));
+
+      let score: import("@shared/types").MatchScoreResponse | null = null;
+      if (resume) {
+        try {
+          score = await api.scoreMatch(job.job_id, resume.resume_id);
+        } catch {
+          /* scoring is optional; still save the application */
+        }
+      }
+
+      await api.createApplication(job.job_id, resume?.resume_id);
       return score;
     },
     onSuccess: (data) => {
       setMatchScore(data);
+      setSavedApplication(true);
       setError(null);
     },
     onError: (e: Error) => setError(parseErrorMessage(e)),
@@ -189,7 +212,8 @@ export function CopilotWorkflow() {
   const loading =
     importFromUrl.isPending ||
     analyzeJob.isPending ||
-    uploadAndTailor.isPending ||
+    uploadOnly.isPending ||
+    tailorOnly.isPending ||
     cover.isPending ||
     match.isPending;
 
@@ -298,6 +322,7 @@ export function CopilotWorkflow() {
         <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">{t("copilot.tailor.title")}</h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("copilot.tailor.subtitle")}</p>
+          <p className="text-xs text-zinc-500">{t("copilot.tailor.optionalHint")}</p>
 
           {!authLoading && !isAuthenticated && (
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
@@ -369,16 +394,28 @@ export function CopilotWorkflow() {
             </div>
           )}
 
-          <button
-            type="button"
-            disabled={loading || !resumeFile || !job || !isAuthenticated}
-            onClick={() => uploadAndTailor.mutate()}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
-          >
-            {uploadAndTailor.isPending
-              ? t("copilot.tailor.processing")
-              : t("copilot.tailor.uploadAndTailor")}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={loading || !resumeFile || !job || !isAuthenticated}
+              onClick={() => uploadOnly.mutate()}
+              className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
+            >
+              {uploadOnly.isPending
+                ? t("copilot.tailor.uploading")
+                : t("copilot.tailor.uploadOnly")}
+            </button>
+            <button
+              type="button"
+              disabled={loading || !resume || !job || !isAuthenticated}
+              onClick={() => tailorOnly.mutate()}
+              className="rounded-lg border border-violet-500/50 bg-violet-500/10 px-5 py-2.5 text-sm font-medium text-violet-800 hover:bg-violet-500/20 disabled:opacity-50 dark:text-violet-200"
+            >
+              {tailorOnly.isPending
+                ? t("copilot.tailor.tailoring")
+                : t("copilot.tailor.tailorOnly")}
+            </button>
+          </div>
 
           {tailorResult && (
             <div className="space-y-4 border-t border-zinc-200 dark:border-zinc-800 pt-4">
@@ -443,14 +480,43 @@ export function CopilotWorkflow() {
       {step === 3 && (
         <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">{t("copilot.match.title")}</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("copilot.match.subtitle")}</p>
+
+          {!authLoading && !isAuthenticated && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+              <p className="text-sm text-amber-800 dark:text-amber-200">{t("copilot.match.signInPrompt")}</p>
+              <GoogleSignInButton />
+            </div>
+          )}
+
+          {!job && (
+            <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.match.completeJobFirst")}</p>
+          )}
+
           <button
             type="button"
-            disabled={loading || !resume || !job}
+            disabled={loading || !job || !isAuthenticated}
             onClick={() => match.mutate()}
             className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
           >
-            {match.isPending ? t("copilot.match.scoring") : t("copilot.match.scoreAndSave")}
+            {match.isPending
+              ? resume
+                ? t("copilot.match.scoring")
+                : t("copilot.match.saving")
+              : resume
+                ? t("copilot.match.scoreAndSave")
+                : t("copilot.match.save")}
           </button>
+
+          {savedApplication && (
+            <p className="text-sm text-emerald-600 dark:text-emerald-400">
+              {t("copilot.match.saved")}{" "}
+              <Link href="/applications" className="underline hover:no-underline">
+                {t("header.myApplications")}
+              </Link>
+            </p>
+          )}
+
           {matchScore && (
             <div className="space-y-4">
               <p className="text-4xl font-bold text-emerald-400">{matchScore.overall_score}</p>

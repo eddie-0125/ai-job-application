@@ -19,7 +19,7 @@ router = APIRouter()
 
 class ApplicationCreate(BaseModel):
     job_id: uuid.UUID
-    resume_id: uuid.UUID
+    resume_id: uuid.UUID | None = None
 
 
 class ApplicationResponse(BaseModel):
@@ -54,21 +54,22 @@ async def create_application(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    resume = await get_user_resume(body.resume_id, current_user, db)
-    if not resume.user_id:
-        resume.user_id = current_user.id
-
     match_details: MatchScoreResponse | None = None
     score: float | None = None
 
-    if job.extracted_profile:
-        profile = JobProfile.model_validate(job.extracted_profile)
-        try:
-            agent = MatchScoringAgent()
-            match_details = await agent.score(resume.content, profile)
-            score = float(match_details.overall_score)
-        except Exception:
-            pass
+    if body.resume_id:
+        resume = await get_user_resume(body.resume_id, current_user, db)
+        if not resume.user_id:
+            resume.user_id = current_user.id
+
+        if job.extracted_profile:
+            profile = JobProfile.model_validate(job.extracted_profile)
+            try:
+                agent = MatchScoringAgent()
+                match_details = await agent.score(resume.content, profile)
+                score = float(match_details.overall_score)
+            except Exception:
+                pass
 
     application = Application(
         user_id=current_user.id,
