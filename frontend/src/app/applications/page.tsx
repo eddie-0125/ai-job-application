@@ -73,7 +73,7 @@ export default function ApplicationsPage() {
           </div>
           <Link
             href="/"
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium hover:bg-violet-500"
+            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
           >
             {t("applications.newApplication")}
           </Link>

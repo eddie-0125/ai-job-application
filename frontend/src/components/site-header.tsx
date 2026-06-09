@@ -48,7 +48,7 @@ export function SiteHeader() {
                   className="h-8 w-8 rounded-full border border-zinc-300 dark:border-zinc-700"
                 />
               ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-medium">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-medium text-white">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -67,7 +67,7 @@ export function SiteHeader() {
           ) : (
             <Link
               href="/login"
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium hover:bg-violet-500"
+              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
             >
               {t("header.signInGoogle")}
             </Link>

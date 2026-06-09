@@ -306,7 +306,7 @@ export function CopilotWorkflow() {
             type="button"
             disabled={loading || jobDesc.length < 50}
             onClick={() => analyzeJob.mutate()}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
+            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
           >
             {analyzeJob.isPending ? t("copilot.job.analyzing") : t("copilot.job.analyze")}
           </button>
@@ -399,7 +399,7 @@ export function CopilotWorkflow() {
               type="button"
               disabled={loading || !resumeFile || !job || !isAuthenticated}
               onClick={() => uploadOnly.mutate()}
-              className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
+              className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
             >
               {uploadOnly.isPending
                 ? t("copilot.tailor.uploading")
@@ -456,7 +456,7 @@ export function CopilotWorkflow() {
             type="button"
             disabled={loading || !resume || !job}
             onClick={() => cover.mutate()}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
+            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
           >
             {cover.isPending ? t("copilot.coverLetter.generating") : t("copilot.coverLetter.generate")}
           </button>
@@ -497,7 +497,7 @@ export function CopilotWorkflow() {
             type="button"
             disabled={loading || !job || !isAuthenticated}
             onClick={() => match.mutate()}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
+            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
           >
             {match.isPending
               ? resume
