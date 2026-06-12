@@ -118,6 +118,13 @@ export const api = {
   listApplications: () =>
     request<import("@shared/types").ApplicationSummary[]>("/api/applications", undefined, true),
 
+  getApplication: (applicationId: string) =>
+    request<import("@shared/types").ApplicationDetail>(
+      `/api/applications/${applicationId}`,
+      undefined,
+      true
+    ),
+
   createApplication: (jobId: string, resumeId?: string | null) =>
     request<{ id: string }>(
       "/api/applications",

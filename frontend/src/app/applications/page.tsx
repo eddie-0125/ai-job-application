@@ -101,22 +101,33 @@ export default function ApplicationsPage() {
                 key={app.id}
                 className="rounded-xl border border-zinc-200 bg-white/80 p-4 flex flex-col sm:flex-row sm:items-center gap-4 dark:border-zinc-800 dark:bg-zinc-900/50"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{app.job_title}</p>
+                <Link
+                  href={`/applications/${app.id}`}
+                  className="flex-1 min-w-0 group"
+                >
+                  <p className="font-medium truncate group-hover:text-violet-600 dark:group-hover:text-violet-400">
+                    {app.job_title}
+                  </p>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">{app.company}</p>
                   <p className="text-xs text-zinc-500 mt-1">
                     {app.created_at
                       ? new Date(app.created_at).toLocaleDateString(dateLocale)
                       : "—"}
                     {app.score != null && (
-                      <span className="ml-3 text-emerald-400">
+                      <span className="ml-3 text-emerald-600 dark:text-emerald-400">
                         {t("applications.score", { value: Math.round(app.score) })}
                       </span>
                     )}
                   </p>
-                </div>
+                  <p className="mt-1 text-xs text-violet-600 dark:text-violet-400">
+                    {t("applications.viewDetails")} →
+                  </p>
+                </Link>
 
-                <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center gap-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-medium ${statusColor(app.status)}`}
                   >

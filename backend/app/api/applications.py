@@ -43,6 +43,26 @@ class ApplicationSummary(BaseModel):
     applied_at: str | None
 
 
+class ApplicationJobDetail(BaseModel):
+    company: str
+    title: str
+    description: str
+    source_url: str | None
+    profile: JobProfile | None
+
+
+class ApplicationDetail(BaseModel):
+    id: uuid.UUID
+    job_id: uuid.UUID
+    resume_id: uuid.UUID | None
+    status: str
+    score: float | None
+    match_details: MatchScoreResponse | None
+    created_at: str | None
+    applied_at: str | None
+    job: ApplicationJobDetail
+
+
 @router.post("", response_model=ApplicationResponse)
 async def create_application(
     body: ApplicationCreate,
@@ -119,6 +139,55 @@ async def list_applications(
         )
         for a in apps
     ]
+
+
+@router.get("/{application_id}", response_model=ApplicationDetail)
+async def get_application(
+    application_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(Application)
+        .options(selectinload(Application.job))
+        .where(
+            Application.id == application_id,
+            Application.user_id == current_user.id,
+        )
+    )
+    application = result.scalar_one_or_none()
+    if not application or not application.job:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    job = application.job
+    profile = (
+        JobProfile.model_validate(job.extracted_profile)
+        if job.extracted_profile
+        else None
+    )
+    match_details = (
+        MatchScoreResponse.model_validate(application.match_details)
+        if application.match_details
+        else None
+    )
+
+    return ApplicationDetail(
+        id=application.id,
+        job_id=application.job_id,
+        resume_id=application.resume_id,
+        status=application.status,
+        score=application.score,
+        match_details=match_details,
+        created_at=application.created_at.isoformat() if application.created_at else None,
+        applied_at=application.applied_at.isoformat() if application.applied_at else None,
+        job=ApplicationJobDetail(
+            company=job.company,
+            title=job.title,
+            description=job.description,
+            source_url=job.source_url,
+            profile=profile,
+        ),
+    )
 
 
 @router.patch("/{application_id}/status")

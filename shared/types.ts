@@ -73,6 +73,26 @@ export interface ApplicationSummary {
   applied_at: string | null;
 }
 
+export interface ApplicationJobDetail {
+  company: string;
+  title: string;
+  description: string;
+  source_url: string | null;
+  profile: JobProfile | null;
+}
+
+export interface ApplicationDetail {
+  id: string;
+  job_id: string;
+  resume_id: string | null;
+  status: string;
+  score: number | null;
+  match_details: MatchScoreResponse | null;
+  created_at: string | null;
+  applied_at: string | null;
+  job: ApplicationJobDetail;
+}
+
 export interface User {
   id: string;
   email: string;
