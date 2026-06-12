@@ -3,13 +3,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SiteHeader } from "@/components/site-header";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import type { ApplicationSummary } from "@shared/types";
 
 const STATUS_OPTIONS = ["draft", "applied", "interview", "rejected", "offer"] as const;
+type SortOrder = "newest" | "oldest";
+
+function applicationDate(app: ApplicationSummary): number {
+  const date = app.applied_at ?? app.created_at;
+  return date ? new Date(date).getTime() : 0;
+}
 
 function statusColor(status: string) {
   switch (status) {
@@ -32,6 +39,7 @@ export default function ApplicationsPage() {
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading } = useAuthStore();
   const dateLocale = i18n.language === "zh" ? "zh-CN" : "en-US";
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -44,6 +52,13 @@ export default function ApplicationsPage() {
     queryFn: () => api.listApplications(),
     enabled: isAuthenticated,
   });
+
+  const sortedApplications = useMemo(() => {
+    return [...applications].sort((a, b) => {
+      const diff = applicationDate(b) - applicationDate(a);
+      return sortOrder === "newest" ? diff : -diff;
+    });
+  }, [applications, sortOrder]);
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
@@ -95,8 +110,23 @@ export default function ApplicationsPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
-            {applications.map((app) => (
+          <>
+            <div className="mb-4 flex items-center justify-end gap-2">
+              <label htmlFor="application-sort" className="text-sm text-zinc-600 dark:text-zinc-400">
+                {t("applications.sort")}
+              </label>
+              <select
+                id="application-sort"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              >
+                <option value="newest">{t("applications.sortNewest")}</option>
+                <option value="oldest">{t("applications.sortOldest")}</option>
+              </select>
+            </div>
+            <div className="space-y-3">
+            {sortedApplications.map((app) => (
               <div
                 key={app.id}
                 className="rounded-xl border border-zinc-200 bg-white/80 p-4 flex flex-col sm:flex-row sm:items-center gap-4 dark:border-zinc-800 dark:bg-zinc-900/50"
@@ -110,9 +140,19 @@ export default function ApplicationsPage() {
                   </p>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">{app.company}</p>
                   <p className="text-xs text-zinc-500 mt-1">
-                    {app.created_at
-                      ? new Date(app.created_at).toLocaleDateString(dateLocale)
-                      : "—"}
+                    {app.applied_at ? (
+                      <>
+                        {t("applications.appliedOn")}:{" "}
+                        {new Date(app.applied_at).toLocaleDateString(dateLocale)}
+                      </>
+                    ) : app.created_at ? (
+                      <>
+                        {t("applications.savedOn")}:{" "}
+                        {new Date(app.created_at).toLocaleDateString(dateLocale)}
+                      </>
+                    ) : (
+                      "—"
+                    )}
                     {app.score != null && (
                       <span className="ml-3 text-emerald-600 dark:text-emerald-400">
                         {t("applications.score", { value: Math.round(app.score) })}
@@ -149,7 +189,8 @@ export default function ApplicationsPage() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          </>
         )}
       </div>
     </main>

@@ -55,6 +55,9 @@
     "analysis": "AI analysis",
     "matchBreakdown": "Match breakdown",
     "preferredSkills": "Preferred skills",
+    "sort": "Sort by",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
     "status": {
       "draft": "Draft",
       "applied": "Applied",

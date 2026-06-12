@@ -55,6 +55,9 @@
     "analysis": "AI 分析结果",
     "matchBreakdown": "匹配评分明细",
     "preferredSkills": "优先技能",
+    "sort": "排序",
+    "sortNewest": "最近投递",
+    "sortOldest": "最久投递",
     "status": {
       "draft": "草稿",
       "applied": "已投递",
