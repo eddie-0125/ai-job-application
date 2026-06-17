@@ -11,11 +11,23 @@ import { useAuthStore } from "@/store/auth";
 import type { ApplicationSummary } from "@shared/types";
 
 const STATUS_OPTIONS = ["draft", "applied", "interview", "rejected", "offer"] as const;
-type SortOrder = "newest" | "oldest";
+type SortOrder = "newest" | "oldest" | "status";
+
+const STATUS_SORT_ORDER: Record<string, number> = {
+  offer: 0,
+  interview: 1,
+  applied: 2,
+  draft: 3,
+  rejected: 4,
+};
 
 function applicationDate(app: ApplicationSummary): number {
   const date = app.applied_at ?? app.created_at;
   return date ? new Date(date).getTime() : 0;
+}
+
+function statusRank(status: string): number {
+  return STATUS_SORT_ORDER[status] ?? 99;
 }
 
 function statusColor(status: string) {
@@ -55,6 +67,11 @@ export default function ApplicationsPage() {
 
   const sortedApplications = useMemo(() => {
     return [...applications].sort((a, b) => {
+      if (sortOrder === "status") {
+        const statusDiff = statusRank(a.status) - statusRank(b.status);
+        if (statusDiff !== 0) return statusDiff;
+        return applicationDate(b) - applicationDate(a);
+      }
       const diff = applicationDate(b) - applicationDate(a);
       return sortOrder === "newest" ? diff : -diff;
     });
@@ -123,6 +140,7 @@ export default function ApplicationsPage() {
               >
                 <option value="newest">{t("applications.sortNewest")}</option>
                 <option value="oldest">{t("applications.sortOldest")}</option>
+                <option value="status">{t("applications.sortByStatus")}</option>
               </select>
             </div>
             <div className="space-y-3">

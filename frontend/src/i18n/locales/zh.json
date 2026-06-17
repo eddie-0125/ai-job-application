@@ -58,6 +58,7 @@
     "sort": "排序",
     "sortNewest": "最近投递",
     "sortOldest": "最久投递",
+    "sortByStatus": "按状态排序",
     "status": {
       "draft": "草稿",
       "applied": "已投递",

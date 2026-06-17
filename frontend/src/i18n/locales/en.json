@@ -58,6 +58,7 @@
     "sort": "Sort by",
     "sortNewest": "Newest first",
     "sortOldest": "Oldest first",
+    "sortByStatus": "By status",
     "status": {
       "draft": "Draft",
       "applied": "Applied",
