@@ -10,7 +10,7 @@ import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useCopilotStore } from "@/store/copilot";
 
-const STEP_KEYS = ["job", "tailor", "coverLetter", "match"] as const;
+const STEP_KEYS = ["job", "resume", "tailor", "coverLetter", "match"] as const;
 const ACCEPTED_RESUME_TYPES =
   ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -110,6 +110,7 @@ export function CopilotWorkflow() {
     onSuccess: (data) => {
       setResume(data);
       setError(null);
+      setStep(2);
     },
     onError: (e: Error) => setError(parseErrorMessage(e)),
   });
@@ -139,7 +140,7 @@ export function CopilotWorkflow() {
     onSuccess: (data) => {
       setCoverLetter(data);
       setError(null);
-      setStep(3);
+      setStep(4);
     },
     onError: (e: Error) => setError(parseErrorMessage(e)),
   });
@@ -271,8 +272,17 @@ export function CopilotWorkflow() {
             {analyzeJob.isPending ? t("copilot.job.analyzing") : t("copilot.job.analyze")}
           </button>
           {job && (
-            <div className="mt-4 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-              <JobProfileCard profile={job.profile} />
+            <div className="mt-4 space-y-4">
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+                <JobProfileCard profile={job.profile} />
+              </div>
+              <button
+                type="button"
+                onClick={() => setStep(4)}
+                className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                {t("copilot.job.skipToSave")}
+              </button>
             </div>
           )}
         </section>
@@ -280,24 +290,23 @@ export function CopilotWorkflow() {
 
       {step === 1 && (
         <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-6 space-y-4">
-          <h2 className="text-xl font-semibold">{t("copilot.tailor.title")}</h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("copilot.tailor.subtitle")}</p>
-          <p className="text-xs text-zinc-500">{t("copilot.tailor.optionalHint")}</p>
+          <h2 className="text-xl font-semibold">{t("copilot.resume.title")}</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("copilot.resume.subtitle")}</p>
 
           {!authLoading && !isAuthenticated && (
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
-              <p className="text-sm text-amber-800 dark:text-amber-200">{t("copilot.tailor.signInPrompt")}</p>
+              <p className="text-sm text-amber-800 dark:text-amber-200">{t("copilot.resume.signInPrompt")}</p>
               <GoogleSignInButton />
             </div>
           )}
 
           {!job && (
-            <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.tailor.completeJobFirst")}</p>
+            <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.resume.completeJobFirst")}</p>
           )}
 
           <input
             className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
-            placeholder={t("copilot.tailor.resumeTitle")}
+            placeholder={t("copilot.resume.resumeTitle")}
             value={resumeTitle}
             onChange={(e) => {
               setResumeTitleCustomized(true);
@@ -334,20 +343,20 @@ export function CopilotWorkflow() {
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
                 >
-                  {t("copilot.tailor.reselect")}
+                  {t("copilot.resume.reselect")}
                 </button>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-zinc-700 dark:text-zinc-300">{t("copilot.tailor.uploadPrompt")}</p>
-                <p className="text-xs text-zinc-500">{t("copilot.tailor.uploadHint")}</p>
+                <p className="text-zinc-700 dark:text-zinc-300">{t("copilot.resume.uploadPrompt")}</p>
+                <p className="text-xs text-zinc-500">{t("copilot.resume.uploadHint")}</p>
               </div>
             )}
           </div>
 
           {resume && (
             <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950/50 p-4 space-y-2">
-              <p className="text-xs font-medium text-emerald-400">{t("copilot.tailor.preview")}</p>
+              <p className="text-xs font-medium text-emerald-400">{t("copilot.resume.preview")}</p>
               <p className="text-xs text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap max-h-32 overflow-auto">
                 {resume.content_preview}
               </p>
@@ -361,19 +370,49 @@ export function CopilotWorkflow() {
               onClick={() => uploadOnly.mutate()}
               className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
             >
-              {uploadOnly.isPending
-                ? t("copilot.tailor.uploading")
-                : t("copilot.tailor.uploadOnly")}
+              {uploadOnly.isPending ? t("copilot.resume.uploading") : t("copilot.resume.upload")}
             </button>
+            <button
+              type="button"
+              disabled={!job}
+              onClick={() => setStep(4)}
+              className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {t("copilot.resume.skipToSave")}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {step === 2 && (
+        <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-6 space-y-4">
+          <h2 className="text-xl font-semibold">{t("copilot.tailor.title")}</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("copilot.tailor.subtitle")}</p>
+          <p className="text-xs text-zinc-500">{t("copilot.tailor.optionalHint")}</p>
+
+          {!resume && (
+            <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.tailor.uploadResumeFirst")}</p>
+          )}
+
+          {!job && (
+            <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.tailor.completeJobFirst")}</p>
+          )}
+
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               disabled={loading || !resume || !job || !isAuthenticated}
               onClick={() => tailorOnly.mutate()}
-              className="rounded-lg border border-violet-500/50 bg-violet-500/10 px-5 py-2.5 text-sm font-medium text-violet-800 hover:bg-violet-500/20 disabled:opacity-50 dark:text-violet-200"
+              className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
             >
-              {tailorOnly.isPending
-                ? t("copilot.tailor.tailoring")
-                : t("copilot.tailor.tailorOnly")}
+              {tailorOnly.isPending ? t("copilot.tailor.tailoring") : t("copilot.tailor.generate")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(4)}
+              className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {t("copilot.tailor.skipToSave")}
             </button>
           </div>
 
@@ -409,17 +448,30 @@ export function CopilotWorkflow() {
         </section>
       )}
 
-      {step === 2 && (
+      {step === 3 && (
         <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">{t("copilot.coverLetter.title")}</h2>
-          <button
-            type="button"
-            disabled={loading || !resume || !job}
-            onClick={() => cover.mutate()}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
-          >
-            {cover.isPending ? t("copilot.coverLetter.generating") : t("copilot.coverLetter.generate")}
-          </button>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("copilot.coverLetter.subtitle")}</p>
+          {!resume && (
+            <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.coverLetter.uploadResumeFirst")}</p>
+          )}
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={loading || !resume || !job}
+              onClick={() => cover.mutate()}
+              className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
+            >
+              {cover.isPending ? t("copilot.coverLetter.generating") : t("copilot.coverLetter.generate")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(4)}
+              className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {t("copilot.coverLetter.skipToSave")}
+            </button>
+          </div>
           {coverLetter && (
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
@@ -437,7 +489,7 @@ export function CopilotWorkflow() {
         </section>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">{t("copilot.match.title")}</h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("copilot.match.subtitle")}</p>

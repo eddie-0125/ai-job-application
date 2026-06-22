@@ -70,9 +70,10 @@
   "copilot": {
     "steps": {
       "job": "Job",
+      "resume": "Resume",
       "tailor": "Tailor",
       "coverLetter": "Cover Letter",
-      "match": "Match"
+      "match": "Save"
     },
     "errors": {
       "selectResume": "Please select a resume file",
@@ -97,11 +98,12 @@
       "analyze": "Analyze with AI",
       "analyzing": "Analyzing…",
       "requiredSkills": "Required skills",
-      "atsKeywords": "ATS keywords"
+      "atsKeywords": "ATS keywords",
+      "skipToSave": "Skip to save application"
     },
-    "tailor": {
-      "title": "Upload resume & tailor",
-      "subtitle": "Upload a PDF or Word resume (.pdf / .doc / .docx). The system will parse it and optimize for ATS against this job.",
+    "resume": {
+      "title": "Upload resume",
+      "subtitle": "Upload your resume to enable tailoring, cover letters, and match scoring. You can skip this step and save the application with job details only.",
       "signInPrompt": "Sign in with your Google account to save your resume and application history.",
       "completeJobFirst": "Complete job analysis in the Job step first.",
       "resumeTitle": "Resume title",
@@ -109,20 +111,29 @@
       "uploadPrompt": "Click or drag to upload resume",
       "uploadHint": "PDF, DOC, DOCX · max 10 MB",
       "preview": "Parsed resume preview",
-      "uploadOnly": "Upload resume",
+      "upload": "Upload resume",
       "uploading": "Uploading…",
-      "tailorOnly": "Generate tailored resume (optional)",
+      "skipToSave": "Skip to save application"
+    },
+    "tailor": {
+      "title": "Tailor resume",
+      "subtitle": "Optional. Generate an ATS-optimized version of your resume for this job.",
+      "uploadResumeFirst": "Upload a resume in the previous step first.",
+      "completeJobFirst": "Complete job analysis in the Job step first.",
+      "generate": "Generate tailored resume",
       "tailoring": "Tailoring…",
-      "uploadAndTailor": "Upload & generate tailored resume",
-      "processing": "Parsing & tailoring…",
-      "optionalHint": "Tailoring is optional. You can save this application in the Match step without accepting any resume changes.",
+      "optionalHint": "This step is optional. You can skip tailoring and save your application directly.",
+      "skipToSave": "Skip to save application",
       "atsScore": "Estimated ATS score",
       "completeJobStep": "Please complete job analysis in the Job step first."
     },
     "coverLetter": {
       "title": "Cover letter",
+      "subtitle": "Optional. Generate a cover letter based on your resume and this job.",
+      "uploadResumeFirst": "Upload a resume first to generate a cover letter.",
       "generate": "Generate cover letter",
-      "generating": "Generating…"
+      "generating": "Generating…",
+      "skipToSave": "Skip to save application"
     },
     "match": {
       "title": "Match score",

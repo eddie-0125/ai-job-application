@@ -70,9 +70,10 @@
   "copilot": {
     "steps": {
       "job": "职位",
+      "resume": "上传简历",
       "tailor": "简历优化",
       "coverLetter": "求职信",
-      "match": "匹配度"
+      "match": "保存"
     },
     "errors": {
       "selectResume": "请选择简历文件",
@@ -97,11 +98,12 @@
       "analyze": "AI 分析职位",
       "analyzing": "分析中…",
       "requiredSkills": "必备技能",
-      "atsKeywords": "ATS 关键词"
+      "atsKeywords": "ATS 关键词",
+      "skipToSave": "跳过，直接保存申请"
     },
-    "tailor": {
-      "title": "上传简历并优化",
-      "subtitle": "上传 PDF 或 Word 简历（.pdf / .doc / .docx），系统将自动解析内容并针对当前职位进行 ATS 优化。",
+    "resume": {
+      "title": "上传简历",
+      "subtitle": "上传简历后可进行优化、生成求职信和匹配评分。也可跳过此步骤，仅保存职位信息。",
       "signInPrompt": "请先登录 Google 账号，以便保存简历和申请记录。",
       "completeJobFirst": "请先在「职位」步骤完成职位分析。",
       "resumeTitle": "简历标题",
@@ -109,20 +111,29 @@
       "uploadPrompt": "点击或拖拽上传简历",
       "uploadHint": "支持 PDF、DOC、DOCX，最大 10 MB",
       "preview": "已解析简历内容预览",
-      "uploadOnly": "上传简历",
+      "upload": "上传简历",
       "uploading": "上传中…",
-      "tailorOnly": "生成优化简历（可选）",
+      "skipToSave": "跳过，直接保存申请"
+    },
+    "tailor": {
+      "title": "简历优化",
+      "subtitle": "可选项。针对当前职位生成 ATS 优化版简历。",
+      "uploadResumeFirst": "请先在「上传简历」步骤上传简历。",
+      "completeJobFirst": "请先在「职位」步骤完成职位分析。",
+      "generate": "生成优化简历",
       "tailoring": "优化中…",
-      "uploadAndTailor": "上传并生成优化简历",
-      "processing": "解析并优化中…",
-      "optionalHint": "简历优化为可选项。你可在「匹配度」步骤直接保存申请，无需接受任何简历修改。",
+      "optionalHint": "此步骤为可选项，可跳过优化直接保存申请。",
+      "skipToSave": "跳过，直接保存申请",
       "atsScore": "ATS 预估分数",
       "completeJobStep": "请先在「职位」步骤完成职位分析。"
     },
     "coverLetter": {
       "title": "求职信",
+      "subtitle": "可选项。根据简历和职位信息生成求职信。",
+      "uploadResumeFirst": "请先上传简历以生成求职信。",
       "generate": "生成求职信",
-      "generating": "生成中…"
+      "generating": "生成中…",
+      "skipToSave": "跳过，直接保存申请"
     },
     "match": {
       "title": "匹配评分",
