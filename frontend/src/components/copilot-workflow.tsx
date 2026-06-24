@@ -61,6 +61,34 @@ export function CopilotWorkflow() {
 
   const { isAuthenticated, isLoading: authLoading } = useAuthStore();
 
+  const hasJobInfo =
+    company.trim().length > 0 ||
+    jobTitle.trim().length > 0 ||
+    jobDesc.trim().length > 0;
+
+  const buildJobPayload = () => ({
+    company,
+    title: jobTitle,
+    description: jobDesc,
+    source_url: sourceUrl ?? (jobUrl.trim() || undefined),
+  });
+
+  const ensureJob = async () => {
+    if (job) return job;
+    if (!hasJobInfo) throw new Error(t("copilot.errors.provideJobInfo"));
+    const data = await api.createJob(buildJobPayload());
+    setJob(data);
+    return data;
+  };
+
+  const hasAnalyzedProfile = (profile: import("@shared/types").JobProfile) =>
+    Boolean(
+      profile.role ||
+        profile.seniority ||
+        profile.required_skills.length > 0 ||
+        profile.ats_keywords.length > 0
+    );
+
   const parseErrorMessage = (err: unknown): string => {
     if (!(err instanceof Error)) return t("common.somethingWrong");
     try {
@@ -101,10 +129,22 @@ export function CopilotWorkflow() {
     onError: (e: Error) => setError(parseErrorMessage(e)),
   });
 
+  const saveJob = useMutation({
+    mutationFn: () => {
+      if (!hasJobInfo) throw new Error(t("copilot.errors.provideJobInfo"));
+      return api.createJob(buildJobPayload());
+    },
+    onSuccess: (data) => {
+      setJob(data);
+      setError(null);
+    },
+    onError: (e: Error) => setError(parseErrorMessage(e)),
+  });
+
   const uploadOnly = useMutation({
     mutationFn: async () => {
       if (!resumeFile) throw new Error(t("copilot.errors.selectResume"));
-      if (!job) throw new Error(t("copilot.errors.analyzeJobFirst"));
+      await ensureJob();
       return api.uploadResume(resumeFile, resumeTitle);
     },
     onSuccess: (data) => {
@@ -118,8 +158,8 @@ export function CopilotWorkflow() {
   const tailorOnly = useMutation({
     mutationFn: async () => {
       if (!resume) throw new Error(t("copilot.errors.uploadResumeOnly"));
-      if (!job) throw new Error(t("copilot.errors.analyzeJobFirst"));
-      return api.tailorResume(resume.resume_id, job.job_id);
+      const currentJob = await ensureJob();
+      return api.tailorResume(resume.resume_id, currentJob.job_id);
     },
     onSuccess: (data) => {
       setTailorResult(data);
@@ -129,11 +169,12 @@ export function CopilotWorkflow() {
   });
 
   const cover = useMutation({
-    mutationFn: () => {
-      if (!resume || !job) throw new Error(t("copilot.errors.uploadResumeFirst"));
+    mutationFn: async () => {
+      if (!resume) throw new Error(t("copilot.errors.uploadResumeFirst"));
+      const currentJob = await ensureJob();
       return api.generateCoverLetter({
         resume_id: resume.resume_id,
-        job_id: job.job_id,
+        job_id: currentJob.job_id,
         length: "medium",
       });
     },
@@ -147,19 +188,19 @@ export function CopilotWorkflow() {
 
   const match = useMutation({
     mutationFn: async () => {
-      if (!job) throw new Error(t("copilot.errors.analyzeJobToSave"));
       if (!isAuthenticated) throw new Error(t("copilot.errors.signInToSave"));
+      const currentJob = await ensureJob();
 
       let score: import("@shared/types").MatchScoreResponse | null = null;
-      if (resume) {
+      if (resume && hasAnalyzedProfile(currentJob.profile)) {
         try {
-          score = await api.scoreMatch(job.job_id, resume.resume_id);
+          score = await api.scoreMatch(currentJob.job_id, resume.resume_id);
         } catch {
           /* scoring is optional; still save the application */
         }
       }
 
-      await api.createApplication(job.job_id, resume?.resume_id);
+      await api.createApplication(currentJob.job_id, resume?.resume_id);
       return score;
     },
     onSuccess: (data) => {
@@ -173,6 +214,7 @@ export function CopilotWorkflow() {
   const loading =
     importFromUrl.isPending ||
     analyzeJob.isPending ||
+    saveJob.isPending ||
     uploadOnly.isPending ||
     tailorOnly.isPending ||
     cover.isPending ||
@@ -222,6 +264,7 @@ export function CopilotWorkflow() {
         <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-6 space-y-4">
           <h2 className="text-xl font-semibold">{t("copilot.job.title")}</h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("copilot.job.subtitle")}</p>
+          <p className="text-xs text-zinc-500">{t("copilot.job.optionalHint")}</p>
           <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950/50 p-4 space-y-3">
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("copilot.job.importTitle")}</p>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -263,26 +306,45 @@ export function CopilotWorkflow() {
             value={jobDesc}
             onChange={(e) => setJobDesc(e.target.value)}
           />
-          <button
-            type="button"
-            disabled={loading || jobDesc.length < 50}
-            onClick={() => analyzeJob.mutate()}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
-          >
-            {analyzeJob.isPending ? t("copilot.job.analyzing") : t("copilot.job.analyze")}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={loading || jobDesc.length < 50}
+              onClick={() => analyzeJob.mutate()}
+              className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
+            >
+              {analyzeJob.isPending ? t("copilot.job.analyzing") : t("copilot.job.analyze")}
+            </button>
+            <button
+              type="button"
+              disabled={loading || !hasJobInfo}
+              onClick={() => saveJob.mutate()}
+              className="rounded-lg border border-violet-500/50 bg-violet-500/10 px-5 py-2.5 text-sm font-medium text-violet-800 hover:bg-violet-500/20 disabled:opacity-50 dark:text-violet-200"
+            >
+              {saveJob.isPending ? t("copilot.job.saving") : t("copilot.job.save")}
+            </button>
+            <button
+              type="button"
+              disabled={!hasJobInfo && !job}
+              onClick={() => setStep(4)}
+              className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {t("copilot.job.skipToSave")}
+            </button>
+          </div>
           {job && (
-            <div className="mt-4 space-y-4">
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-                <JobProfileCard profile={job.profile} />
-              </div>
-              <button
-                type="button"
-                onClick={() => setStep(4)}
-                className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                {t("copilot.job.skipToSave")}
-              </button>
+            <div className="mt-4 space-y-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                {t("copilot.job.saved")}
+              </p>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                {job.company} · {job.title}
+              </p>
+              {hasAnalyzedProfile(job.profile) && (
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+                  <JobProfileCard profile={job.profile} />
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -300,7 +362,7 @@ export function CopilotWorkflow() {
             </div>
           )}
 
-          {!job && (
+          {!job && !hasJobInfo && (
             <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.resume.completeJobFirst")}</p>
           )}
 
@@ -366,7 +428,7 @@ export function CopilotWorkflow() {
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              disabled={loading || !resumeFile || !job || !isAuthenticated}
+              disabled={loading || !resumeFile || (!job && !hasJobInfo) || !isAuthenticated}
               onClick={() => uploadOnly.mutate()}
               className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
             >
@@ -374,7 +436,7 @@ export function CopilotWorkflow() {
             </button>
             <button
               type="button"
-              disabled={!job}
+              disabled={!hasJobInfo && !job}
               onClick={() => setStep(4)}
               className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
@@ -394,14 +456,14 @@ export function CopilotWorkflow() {
             <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.tailor.uploadResumeFirst")}</p>
           )}
 
-          {!job && (
+          {!job && !hasJobInfo && (
             <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.tailor.completeJobFirst")}</p>
           )}
 
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              disabled={loading || !resume || !job || !isAuthenticated}
+              disabled={loading || !resume || (!job && !hasJobInfo) || !isAuthenticated}
               onClick={() => tailorOnly.mutate()}
               className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
             >
@@ -458,7 +520,7 @@ export function CopilotWorkflow() {
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              disabled={loading || !resume || !job}
+              disabled={loading || !resume || (!job && !hasJobInfo)}
               onClick={() => cover.mutate()}
               className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
             >
@@ -501,21 +563,21 @@ export function CopilotWorkflow() {
             </div>
           )}
 
-          {!job && (
+          {!job && !hasJobInfo && (
             <p className="text-sm text-amber-700 dark:text-amber-400">{t("copilot.match.completeJobFirst")}</p>
           )}
 
           <button
             type="button"
-            disabled={loading || !job || !isAuthenticated}
+            disabled={loading || (!hasJobInfo && !job) || !isAuthenticated}
             onClick={() => match.mutate()}
             className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
           >
             {match.isPending
-              ? resume
+              ? resume && job && hasAnalyzedProfile(job.profile)
                 ? t("copilot.match.scoring")
                 : t("copilot.match.saving")
-              : resume
+              : resume && job && hasAnalyzedProfile(job.profile)
                 ? t("copilot.match.scoreAndSave")
                 : t("copilot.match.save")}
           </button>

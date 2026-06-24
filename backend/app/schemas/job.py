@@ -38,6 +38,13 @@ class JobAnalyzeRequest(BaseModel):
     source_url: str | None = None
 
 
+class JobCreateRequest(BaseModel):
+    description: str = ""
+    company: str = ""
+    title: str = ""
+    source_url: str | None = None
+
+
 class JobAnalyzeResponse(BaseModel):
     job_id: UUID
     profile: JobProfile

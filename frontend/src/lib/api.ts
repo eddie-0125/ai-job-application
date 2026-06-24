@@ -71,6 +71,18 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  createJob: (body: {
+    description?: string;
+    company?: string;
+    title?: string;
+    source_url?: string;
+  }) =>
+    request<import("@shared/types").JobAnalyzeResponse>("/api/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+
   uploadResume: async (file: File, title: string) => {
     const form = new FormData();
     form.append("file", file);

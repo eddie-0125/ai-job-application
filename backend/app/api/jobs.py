@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.schemas.job import (
     JobAnalyzeRequest,
     JobAnalyzeResponse,
+    JobCreateRequest,
     JobImportFromUrlRequest,
     JobImportFromUrlResponse,
     JobProfile,
@@ -74,6 +75,39 @@ async def analyze_job(
     return JobAnalyzeResponse(
         job_id=job.id,
         profile=profile,
+        company=job.company,
+        title=job.title,
+    )
+
+
+@router.post("", response_model=JobAnalyzeResponse)
+async def create_job(
+    body: JobCreateRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    company = body.company.strip()
+    title = body.title.strip()
+    description = body.description.strip()
+    if not (company or title or description):
+        raise HTTPException(
+            status_code=400,
+            detail="Provide at least company, title, or job description",
+        )
+
+    job = Job(
+        company=company or "Unknown",
+        title=title or "Untitled",
+        description=description,
+        source_url=body.source_url,
+        extracted_profile=None,
+    )
+    db.add(job)
+    await db.commit()
+    await db.refresh(job)
+
+    return JobAnalyzeResponse(
+        job_id=job.id,
+        profile=JobProfile(role="", seniority=""),
         company=job.company,
         title=job.title,
     )
