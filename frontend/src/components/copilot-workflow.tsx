@@ -44,6 +44,7 @@ export function CopilotWorkflow() {
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedApplication, setSavedApplication] = useState(false);
+  const [generatedTailoredContent, setGeneratedTailoredContent] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -162,6 +163,7 @@ export function CopilotWorkflow() {
       return api.tailorResume(resume.resume_id, currentJob.job_id);
     },
     onSuccess: (data) => {
+      setGeneratedTailoredContent(data.tailored_content);
       setTailorResult(data);
       setError(null);
     },
@@ -219,6 +221,11 @@ export function CopilotWorkflow() {
     tailorOnly.isPending ||
     cover.isPending ||
     match.isPending;
+
+  const isTailoredContentEdited =
+    tailorResult != null &&
+    generatedTailoredContent.length > 0 &&
+    tailorResult.tailored_content !== generatedTailoredContent;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -502,9 +509,42 @@ export function CopilotWorkflow() {
                   <p className="text-xs text-zinc-500">{c.rationale}</p>
                 </div>
               ))}
-              <pre className="max-h-64 overflow-auto rounded-xl bg-white dark:bg-zinc-950 p-4 text-xs font-mono whitespace-pre-wrap">
-                {tailorResult.tailored_content}
-              </pre>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label
+                    htmlFor="tailored-resume-editor"
+                    className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  >
+                    {t("copilot.tailor.editLabel")}
+                  </label>
+                  {isTailoredContentEdited && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTailorResult({
+                          ...tailorResult,
+                          tailored_content: generatedTailoredContent,
+                        })
+                      }
+                      className="text-xs text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300"
+                    >
+                      {t("copilot.tailor.resetToGenerated")}
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-500">{t("copilot.tailor.editHint")}</p>
+                <textarea
+                  id="tailored-resume-editor"
+                  value={tailorResult.tailored_content}
+                  onChange={(e) =>
+                    setTailorResult({
+                      ...tailorResult,
+                      tailored_content: e.target.value,
+                    })
+                  }
+                  className="w-full min-h-[320px] rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm leading-relaxed font-mono dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              </div>
             </div>
           )}
         </section>

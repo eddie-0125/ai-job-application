@@ -129,6 +129,9 @@
       "tailoring": "Tailoring…",
       "optionalHint": "This step is optional. You can skip tailoring and save your application directly.",
       "skipToSave": "Skip to save application",
+      "editLabel": "Tailored resume (editable)",
+      "editHint": "Review and adjust the generated resume below before continuing.",
+      "resetToGenerated": "Reset to AI version",
       "atsScore": "Estimated ATS score",
       "completeJobStep": "Please complete job analysis in the Job step first."
     },

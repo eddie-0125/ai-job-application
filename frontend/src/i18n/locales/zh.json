@@ -129,6 +129,9 @@
       "tailoring": "优化中…",
       "optionalHint": "此步骤为可选项，可跳过优化直接保存申请。",
       "skipToSave": "跳过，直接保存申请",
+      "editLabel": "优化后简历（可编辑）",
+      "editHint": "可在下方查看并修改 AI 生成的简历内容。",
+      "resetToGenerated": "恢复为 AI 版本",
       "atsScore": "ATS 预估分数",
       "completeJobStep": "请先在「职位」步骤完成职位分析。"
     },
